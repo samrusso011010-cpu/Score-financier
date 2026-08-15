@@ -1,0 +1,8 @@
+{
+  "name": "score-financier-app",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "nodemailer": "^6.9.14"
+  }
+}

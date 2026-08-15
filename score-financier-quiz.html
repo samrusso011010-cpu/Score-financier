@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Score de santé financière</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#122A2E; --ink-soft:#3E5459; --paper:#EEF2F0; --card:#FFFFFF;
+    --line: rgba(18,42,46,0.14); --line-strong: rgba(18,42,46,0.28);
+    --gold:#B9862F; --gold-light:#F3E7D2; --teal:#1F6F5C; --teal-light:#E1EDE8;
+    --red:#B4432E; --red-light:#F5E3DE; --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.55;padding:0 20px 80px;}
+  .wrap{max-width:640px;margin:0 auto;}
+  header.top{padding:40px 0 20px;border-bottom:1px solid var(--line);margin-bottom:28px;}
+  .eyebrow{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);font-weight:600;margin:0 0 10px;}
+  h1{font-family:'Newsreader',serif;font-weight:500;font-size:30px;line-height:1.15;margin:0 0 10px;}
+  .sub{color:var(--ink-soft);font-size:15px;max-width:480px;margin:0;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px 24px;margin-bottom:20px;}
+  .screen{display:none;} .screen.active{display:block;}
+
+  label.field-label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin:0 0 6px;}
+  .field{margin-bottom:16px;}
+  input[type=text], input[type=email], input[type=tel], input[type=number]{
+    width:100%;padding:11px 13px;font-size:15px;font-family:'Inter',sans-serif;
+    border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink);
+  }
+  input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-light);}
+  .err{color:var(--red);font-size:13px;margin-top:6px;display:none;}
+  .err.show{display:block;}
+  .hint{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+
+  button.btn{font-family:'Inter',sans-serif;font-weight:600;font-size:15px;padding:13px 22px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;}
+  button.btn:hover{background:#0B1D20;}
+  button.btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--line-strong);}
+  button.btn.secondary:hover{background:rgba(18,42,46,0.05);}
+  button.btn:disabled{opacity:0.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:12px;justify-content:space-between;margin-top:22px;}
+
+  .progress-wrap{margin-bottom:20px;}
+  .progress-sections{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;}
+  .progress-seg{flex:1;min-width:18px;height:4px;border-radius:2px;background:var(--line);}
+  .progress-seg.done{background:var(--teal);}
+  .progress-seg.current{background:var(--gold);}
+  .progress-label{font-size:12px;color:var(--ink-soft);}
+  .progress-label b{color:var(--gold);font-weight:600;}
+
+  .q-title{font-family:'Newsreader',serif;font-size:21px;font-weight:500;line-height:1.3;margin:0 0 6px;}
+  .q-note{font-size:13px;color:var(--ink-soft);margin:0 0 18px;}
+  .options{display:flex;flex-direction:column;gap:9px;}
+  .opt{border:1px solid var(--line-strong);border-radius:8px;padding:12px 15px;cursor:pointer;font-size:15px;background:#fff;transition:border-color .15s, background .15s;}
+  .opt:hover{border-color:var(--gold);}
+  .opt.selected{border-color:var(--gold);background:var(--gold-light);font-weight:500;}
+  .opt-sub{font-weight:400;font-size:13px;color:var(--ink-soft);margin-top:2px;}
+
+  .followup{margin-top:14px;padding:14px;background:var(--paper);border-radius:8px;border:1px solid var(--line);}
+  .subgroup{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+  .subgroup:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .subgroup-title{font-size:14px;font-weight:600;margin:0 0 10px;}
+  .inline-row{display:flex;gap:10px;align-items:center;}
+  .inline-row input{flex:1;}
+  .freq-toggle{display:flex;gap:8px;margin-top:8px;}
+  .freq-opt{flex:1;text-align:center;padding:8px;border:1px solid var(--line-strong);border-radius:6px;font-size:13px;cursor:pointer;}
+  .freq-opt.selected{border-color:var(--gold);background:var(--gold-light);font-weight:500;}
+
+  .fineprint{font-size:12px;color:var(--ink-soft);text-align:center;margin-top:14px;}
+  .score-num{font-family:'Newsreader',serif;font-size:52px;font-weight:500;margin:0;}
+  .score-tier{font-size:14px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin-top:4px;}
+  .segment-badge{display:inline-block;font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;background:var(--teal-light);color:var(--teal);margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <p class="eyebrow">Évaluation gratuite</p>
+    <h1>Score de santé financière</h1>
+    <p class="sub">Réponds aux questions suivantes pour obtenir un portrait clair de ta situation et des recommandations concrètes.</p>
+  </header>
+
+  <div class="screen active" id="screen-quiz">
+    <div class="progress-wrap">
+      <div class="progress-sections" id="progress-sections"></div>
+      <div class="progress-label" id="progress-label"></div>
+    </div>
+    <div class="card" id="q-card"></div>
+    <div class="btn-row">
+      <button class="btn secondary" id="btn-back" onclick="goBack()">Retour</button>
+      <button class="btn" id="btn-next" onclick="goNext()">Suivant</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-results">
+    <div class="card">
+      <div style="text-align:center">
+        <p class="score-num" id="res-score">0</p>
+        <p class="score-tier" id="res-tier" style="color:var(--gold)">—</p>
+        <div class="segment-badge" id="res-segment">—</div>
+      </div>
+    </div>
+    <div class="card">
+      <p class="q-note" style="margin:0" id="res-message">Merci! Ton portrait personnalisé s'en vient — Samuel le révise avant de te l'envoyer par courriel.</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="pdf-engine.js"></script>
+<script>
+// ======================= SECTIONS =======================
+const SECTIONS = [
+  {id:'intro', label:'Profil'},
+  {id:'score', label:'Score'},
+  {id:'goals', label:'Objectifs'},
+  {id:'situation', label:'Situation'},
+  {id:'family', label:'Famille'},
+  {id:'protection', label:'Protection'},
+  {id:'business', label:'Entreprise'},
+  {id:'accounts', label:'Comptes'},
+  {id:'profile', label:'Investisseur'},
+  {id:'lead', label:'Coordonnées'},
+];
+
+// ======================= DONNÉES PARTAGÉES (source unique: pdf-engine.js) =======================
+const SCORE_QUESTIONS = PDFEngine.SCORE_QUESTIONS;
+const ACCUMULATION_ACCOUNTS = PDFEngine.ACCUMULATION_ACCOUNTS;
+const ACCOUNT_LABELS = PDFEngine.ACCOUNT_LABELS;
+
+// ======================= STEPS =======================
+const STEPS = [
+  { id:'age', section:'intro', kind:'number', title:"Quel âge as-tu?", placeholder:"Ex. 35", min:18, max:100 },
+
+  ...SCORE_QUESTIONS.map(q => ({ id:q.id, section:'score', kind:'single', title:q.title, options:q.options, pillar:q.pillar })),
+
+  { id:'goals', section:'goals', kind:'multi', title:"Quels sont tes objectifs de placement actuels?", note:"Sélectionne tout ce qui s'applique.",
+    options:[
+      {label:"Retraite", value:'retraite'},
+      {label:"Achat d'une propriété", value:'propriete'},
+      {label:"Études des enfants", value:'etudes'},
+      {label:"Démarrer ou faire croître une entreprise", value:'entreprise_obj'},
+      {label:"Autre", value:'autre', other:true},
+    ]},
+  { id:'goals_horizon', section:'goals', kind:'dynamic-horizons', title:"Dans combien d'années souhaites-tu atteindre chacun de ces objectifs?",
+    condition: a => (a.goals||[]).length > 0 },
+
+  { id:'revenu', section:'situation', kind:'single', title:"Quel est ton revenu annuel brut approximatif?",
+    options:[{label:"Moins de 40 000 $"},{label:"40 000 $ à 75 000 $"},{label:"75 000 $ à 125 000 $"},{label:"125 000 $ à 200 000 $"},{label:"200 000 $ et plus"}]},
+  { id:'epargne', section:'situation', kind:'single', title:"Quelle est la valeur totale approximative de ton épargne et tes placements actuels?", note:"REER, CELI, non enregistré, entreprise — excluant ta résidence principale.",
+    options:[{label:"Moins de 10 000 $"},{label:"10 000 $ à 50 000 $"},{label:"50 000 $ à 250 000 $"},{label:"250 000 $ à 500 000 $"},{label:"500 000 $ à 1 000 000 $"},{label:"1 000 000 $ à 2 000 000 $"},{label:"2 000 000 $ et plus"}]},
+  { id:'survie', section:'situation', kind:'single', title:"Si tu arrêtais de travailler aujourd'hui, combien de temps pourrais-tu maintenir ton train de vie avec seulement ton capital accumulé?",
+    options:[{label:"Moins d'un mois"},{label:"1 à 6 mois"},{label:"6 mois à 2 ans"},{label:"2 à 5 ans"},{label:"5 à 15 ans"},{label:"15 ans ou plus"}]},
+  { id:'entreprise', section:'situation', kind:'yesno', title:"As-tu une ou des entreprises (actives ou incorporées)?" },
+  { id:'immo_secondaire', section:'situation', kind:'yesno-number', title:"Possèdes-tu de l'immobilier autre que ta résidence principale (locatif, chalet, terrain)?",
+    followupLabel:"Valeur brute approximative de cet actif", followupPlaceholder:"Ex. 250000" },
+  { id:'residence', section:'situation', kind:'yesno-number', title:"Es-tu propriétaire de ta résidence principale?",
+    followupLabel:"Valeur brute approximative", followupPlaceholder:"Ex. 450000" },
+  { id:'hypotheque', section:'situation', kind:'yesno', title:"Reste-t-il une hypothèque à rembourser (résidence principale ou immobilier secondaire)?",
+    condition: a => a.residence==='oui' || a.immo_secondaire==='oui' },
+
+  { id:'enfants', section:'family', kind:'yesno-children', title:"As-tu des enfants pour qui tu épargnes (études ou autre)?" },
+  { id:'reei_admissible', section:'family', kind:'yesno', title:"Un membre de ta famille (toi, ton enfant, ton conjoint) est-il admissible au crédit d'impôt pour personne handicapée?" },
+  { id:'succession', section:'family', kind:'yesno-multi', title:"As-tu un objectif de laisser un héritage ou de planifier ta succession?",
+    followupTitle:"Précise ce qui s'applique:",
+    followupOptions:[{label:"Léguer à mes enfants",value:'enfants'},{label:"Minimiser l'impôt au décès",value:'impot'},{label:"Donner à une cause",value:'cause'}] },
+
+  { id:'vie_raisons', section:'protection', kind:'multi', title:"Pour quelles raisons une assurance VIE serait-elle importante pour toi?",
+    options:[
+      {label:"Couvrir mes dettes (hypothèque, prêts)", value:'dettes'},
+      {label:"Maintenir le niveau de vie de mes proches", value:'niveau_vie'},
+      {label:"Laisser un héritage", value:'heritage'},
+      {label:"Assurer la continuité de mon entreprise", value:'continuite', condition:a=>a.entreprise==='oui'},
+      {label:"Aucun de ces objectifs ne s'applique / pas sûr", value:'aucun'},
+    ]},
+  { id:'invalidite_raisons', section:'protection', kind:'multi', title:"Pour quelles raisons une assurance INVALIDITÉ serait-elle importante pour toi?",
+    options:[
+      {label:"Maintenir mon revenu/train de vie en cas d'incapacité", value:'revenu'},
+      {label:"Continuer de cotiser à mon plan financier malgré l'arrêt de travail", value:'cotisations'},
+      {label:"Couvrir mes dépenses fixes/dettes en cas d'incapacité", value:'depenses'},
+      {label:"Pas sûr / aucune priorité claire", value:'aucun'},
+    ]},
+  { id:'maladie_raisons', section:'protection', kind:'multi', title:"Pour quelles raisons une assurance MALADIE GRAVE serait-elle importante pour toi?",
+    options:[
+      {label:"Avoir des fonds disponibles pour des soins/traitements non couverts", value:'soins'},
+      {label:"Protéger mes économies/mon plan financier d'être vidé par une maladie grave", value:'proteger_plan'},
+      {label:"Protéger mes enfants en cas de maladie grave (remplacer pertes de revenus, meilleurs soins)", value:'enfants', condition:a=>a.enfants==='oui'},
+      {label:"Pas sûr / aucune priorité claire", value:'aucun'},
+    ]},
+
+  { id:'biz_employe_cle', section:'business', kind:'yesno', title:"As-tu un ou des employés/associés clés dont la perte nuirait à l'entreprise?", condition:a=>a.entreprise==='oui' },
+  { id:'biz_assurance_corpo', section:'business', kind:'yesno', title:"As-tu déjà une assurance vie corporative en place?", condition:a=>a.entreprise==='oui' },
+  { id:'biz_dividendes', section:'business', kind:'yesno', title:"Ta société verse-t-elle des dividendes ou accumule-t-elle des surplus non répartis?", condition:a=>a.entreprise==='oui' },
+  { id:'biz_convention', section:'business', kind:'yesno', title:"Y a-t-il une convention entre actionnaires (si plusieurs actionnaires)?", condition:a=>a.entreprise==='oui' },
+  { id:'biz_releve', section:'business', kind:'yesno', title:"Y a-t-il un plan de relève prévu pour l'entreprise?", condition:a=>a.entreprise==='oui' },
+
+  { id:'accounts_selected', section:'accounts', kind:'accounts-select', title:"Parmi les comptes suivants, lesquels détiens-tu actuellement?" },
+  { id:'accounts_details', section:'accounts', kind:'accounts-details', title:"Pour chaque compte, indique le solde actuel et, s'il y a lieu, ta cotisation.",
+    condition: a => (a.accounts_selected||[]).length > 0 },
+
+  { id:'profil', section:'profile', kind:'single', title:"Comment décrirais-tu ta tolérance au risque en placement?",
+    options:[{label:"Prudent", value:'prudent'},{label:"Équilibré", value:'equilibre'},{label:"Audacieux", value:'audacieux'},{label:"Je ne sais pas", value:'inconnu'}] },
+  { id:'allocation_actuelle', section:'profile', kind:'single', title:"Et dans les faits, comment ton argent est-il investi actuellement, dans l'ensemble de tes comptes de placement?",
+    note:"Une estimation suffit — on validera les détails en rendez-vous.",
+    condition: a => (a.accounts_selected||[]).length > 0,
+    options:[{label:"Surtout prudent — liquidités, CPG, comptes d'épargne, obligations"},{label:"Un mélange équilibré d'obligations et d'actions"},{label:"Surtout en actions / croissance"},{label:"Je ne sais pas trop comment c'est réparti"}] },
+
+  { id:'lead', section:'lead', kind:'lead', title:"Dernière étape — où veux-tu recevoir tes résultats?" },
+];
+
+// ======================= STATE =======================
+let answers = {};
+let pointer = 0;
+
+function visibleSteps(){
+  return STEPS.filter(s => !s.condition || s.condition(answers));
+}
+
+function currentStep(){ return visibleSteps()[pointer]; }
+
+// ======================= RENDER =======================
+function renderProgress(){
+  const step = currentStep();
+  const wrap = document.getElementById('progress-sections');
+  wrap.innerHTML = '';
+  const currentIdx = SECTIONS.findIndex(s=>s.id===step.section);
+  SECTIONS.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className = 'progress-seg' + (i<currentIdx?' done':'') + (i===currentIdx?' current':'');
+    wrap.appendChild(div);
+  });
+  document.getElementById('progress-label').innerHTML = `Étape ${currentIdx+1} / ${SECTIONS.length} — <b>${SECTIONS[currentIdx].label}</b>`;
+}
+
+function renderStep(){
+  const step = currentStep();
+  renderProgress();
+  const card = document.getElementById('q-card');
+  let html = `<p class="q-title">${step.title}</p>`;
+  if(step.note) html += `<p class="q-note">${step.note}</p>`;
+  html += `<div id="step-body"></div><div class="err" id="step-err"></div>`;
+  card.innerHTML = html;
+  const body = document.getElementById('step-body');
+
+  if(step.kind==='number'){
+    body.innerHTML = `<input type="number" id="f-val" placeholder="${step.placeholder||''}" value="${answers[step.id]??''}">`;
+  }
+  else if(step.kind==='single'){
+    body.innerHTML = `<div class="options">${step.options.map((o,i)=>`
+      <div class="opt ${answers[step.id]===i?'selected':''}" data-i="${i}">
+        <div>${o.label}</div>
+      </div>`).join('')}</div>`;
+    body.querySelectorAll('.opt').forEach(el=>el.onclick=()=>{ answers[step.id]=parseInt(el.dataset.i); renderStep(); });
+  }
+  else if(step.kind==='multi'){
+    const opts = step.options.filter(o=>!o.condition||o.condition(answers));
+    const sel = answers[step.id]||[];
+    body.innerHTML = `<div class="options">${opts.map(o=>`
+      <div class="opt ${sel.includes(o.value)?'selected':''}" data-v="${o.value}">${o.label}</div>`).join('')}</div>`;
+    const otherOpt = opts.find(o=>o.other);
+    if(otherOpt && sel.includes(otherOpt.value)){
+      body.innerHTML += `<div class="followup"><input type="text" id="f-other" placeholder="Précise..." value="${answers[step.id+'_other']||''}"></div>`;
+    }
+    body.querySelectorAll('.opt').forEach(el=>el.onclick=()=>{
+      const v = el.dataset.v;
+      let arr = answers[step.id]||[];
+      if(arr.includes(v)) arr = arr.filter(x=>x!==v); else arr = [...arr, v];
+      answers[step.id]=arr;
+      renderStep();
+    });
+    const otherInput = document.getElementById('f-other');
+    if(otherInput) otherInput.oninput = e => answers[step.id+'_other']=e.target.value;
+  }
+  else if(step.kind==='yesno'){
+    body.innerHTML = `<div class="options">
+      <div class="opt ${answers[step.id]==='oui'?'selected':''}" data-v="oui">Oui</div>
+      <div class="opt ${answers[step.id]==='non'?'selected':''}" data-v="non">Non</div>
+    </div>`;
+    body.querySelectorAll('.opt').forEach(el=>el.onclick=()=>{ answers[step.id]=el.dataset.v; renderStep(); });
+  }
+  else if(step.kind==='yesno-number'){
+    body.innerHTML = `<div class="options">
+      <div class="opt ${answers[step.id]==='oui'?'selected':''}" data-v="oui">Oui</div>
+      <div class="opt ${answers[step.id]==='non'?'selected':''}" data-v="non">Non</div>
+    </div>`;
+    if(answers[step.id]==='oui'){
+      body.innerHTML += `<div class="followup">
+        <label class="field-label">${step.followupLabel}</label>
+        <input type="number" id="f-val" placeholder="${step.followupPlaceholder||''}" value="${answers[step.id+'_valeur']??''}">
+      </div>`;
+    }
+    body.querySelectorAll('.opt').forEach(el=>el.onclick=()=>{ answers[step.id]=el.dataset.v; renderStep(); });
+    const fv = document.getElementById('f-val');
+    if(fv) fv.oninput = e => answers[step.id+'_valeur']=e.target.value;
+  }
+  else if(step.kind==='yesno-multi'){
+    body.innerHTML = `<div class="options">
+      <div class="opt ${answers[step.id]==='oui'?'selected':''}" data-v="oui">Oui</div>
+      <div class="opt ${answers[step.id]==='non'?'selected':''}" data-v="non">Non</div>
+    </div>`;
+    if(answers[step.id]==='oui'){
+      const sel = answers[step.id+'_precision']||[];
+      body.innerHTML += `<div class="followup">
+        <p class="subgroup-title">${step.followupTitle}</p>
+        <div class="options">${step.followupOptions.map(o=>`
+          <div class="opt sub-opt ${sel.includes(o.value)?'selected':''}" data-v="${o.value}">${o.label}</div>`).join('')}</div>
+      </div>`;
+    }
+    body.querySelectorAll('.opt:not(.sub-opt)').forEach(el=>el.onclick=()=>{ answers[step.id]=el.dataset.v; renderStep(); });
+    body.querySelectorAll('.sub-opt').forEach(el=>el.onclick=()=>{
+      const v = el.dataset.v; let arr = answers[step.id+'_precision']||[];
+      if(arr.includes(v)) arr = arr.filter(x=>x!==v); else arr=[...arr,v];
+      answers[step.id+'_precision']=arr; renderStep();
+    });
+  }
+  else if(step.kind==='yesno-children'){
+    body.innerHTML = `<div class="options">
+      <div class="opt ${answers[step.id]==='oui'?'selected':''}" data-v="oui">Oui</div>
+      <div class="opt ${answers[step.id]==='non'?'selected':''}" data-v="non">Non</div>
+    </div>`;
+    if(answers[step.id]==='oui'){
+      const count = answers.enfants_nombre || 1;
+      let ageInputs = '';
+      for(let i=0;i<count;i++){
+        ageInputs += `<div class="field"><label class="field-label">Âge de l'enfant ${i+1}</label><input type="number" class="child-age" data-idx="${i}" value="${(answers.enfants_ages||[])[i]??''}"></div>`;
+      }
+      body.innerHTML += `<div class="followup">
+        <div class="field"><label class="field-label">Combien d'enfants?</label><input type="number" id="f-count" min="1" max="10" value="${count}"></div>
+        ${ageInputs}
+      </div>`;
+    }
+    body.querySelectorAll('.opt').forEach(el=>el.onclick=()=>{ answers[step.id]=el.dataset.v; if(el.dataset.v==='oui' && !answers.enfants_nombre) answers.enfants_nombre=1; renderStep(); });
+    const fc = document.getElementById('f-count');
+    if(fc) fc.oninput = e => { answers.enfants_nombre = parseInt(e.target.value)||1; renderStep(); };
+    body.querySelectorAll('.child-age').forEach(el=>el.oninput=e=>{
+      let arr = answers.enfants_ages || [];
+      arr[parseInt(el.dataset.idx)] = e.target.value;
+      answers.enfants_ages = arr;
+    });
+  }
+  else if(step.kind==='dynamic-horizons'){
+    const goals = answers.goals||[];
+    const labelMap = {retraite:"Retraite", propriete:"Achat d'une propriété", etudes:"Études des enfants", entreprise_obj:"Entreprise", autre: answers.goals_other||"Autre objectif"};
+    body.innerHTML = goals.map(g=>`
+      <div class="field">
+        <label class="field-label">${labelMap[g]} — horizon (en années)</label>
+        <input type="number" class="horizon-input" data-g="${g}" placeholder="Ex. 10" value="${(answers.horizons||{})[g]??''}">
+      </div>`).join('');
+    body.querySelectorAll('.horizon-input').forEach(el=>el.oninput=e=>{
+      answers.horizons = answers.horizons || {};
+      answers.horizons[el.dataset.g] = e.target.value;
+    });
+  }
+  else if(step.kind==='accounts-select'){
+    const segment = PDFEngine.computeSegment(answers);
+    let opts = ['REER','CELI','CELIAPP','NONENR'];
+    if(answers.enfants==='oui') opts.push('REEE');
+    if(answers.reei_admissible==='oui') opts.push('REEI');
+    if(segment!=='faible') opts.push('CRI','FRV','FERR','REERIMMO');
+    const sel = answers.accounts_selected||[];
+    body.innerHTML = `<div class="options">${opts.map(code=>`
+      <div class="opt ${sel.includes(code)?'selected':''}" data-v="${code}">${ACCOUNT_LABELS[code]}</div>`).join('')}</div>`;
+    body.querySelectorAll('.opt').forEach(el=>el.onclick=()=>{
+      const v = el.dataset.v; let arr = answers.accounts_selected||[];
+      if(arr.includes(v)) arr=arr.filter(x=>x!==v); else arr=[...arr,v];
+      answers.accounts_selected=arr; renderStep();
+    });
+  }
+  else if(step.kind==='accounts-details'){
+    const sel = answers.accounts_selected||[];
+    answers.accounts_details = answers.accounts_details || {};
+    body.innerHTML = sel.map(code=>{
+      const isAccum = ACCUMULATION_ACCOUNTS.includes(code);
+      const d = answers.accounts_details[code] || {};
+      return `<div class="subgroup">
+        <p class="subgroup-title">${ACCOUNT_LABELS[code]}</p>
+        <div class="field"><label class="field-label">Solde actuel</label><input type="number" class="acc-solde" data-code="${code}" placeholder="Ex. 25000" value="${d.solde??''}"></div>
+        ${isAccum ? `
+        <div class="field"><label class="field-label">Cotisation</label><input type="number" class="acc-cotis" data-code="${code}" placeholder="Ex. 300" value="${d.cotisation??''}">
+          <div class="freq-toggle">
+            <div class="freq-opt ${d.freq==='mensuelle'?'selected':''}" data-code="${code}" data-freq="mensuelle">Mensuelle</div>
+            <div class="freq-opt ${d.freq==='annuelle'?'selected':''}" data-code="${code}" data-freq="annuelle">Annuelle</div>
+          </div>
+        </div>` : ''}
+      </div>`;
+    }).join('');
+    body.querySelectorAll('.acc-solde').forEach(el=>el.oninput=e=>{
+      const c = el.dataset.code; answers.accounts_details[c] = answers.accounts_details[c]||{}; answers.accounts_details[c].solde = e.target.value;
+    });
+    body.querySelectorAll('.acc-cotis').forEach(el=>el.oninput=e=>{
+      const c = el.dataset.code; answers.accounts_details[c] = answers.accounts_details[c]||{}; answers.accounts_details[c].cotisation = e.target.value;
+    });
+    body.querySelectorAll('.freq-opt').forEach(el=>el.onclick=()=>{
+      const c = el.dataset.code; answers.accounts_details[c] = answers.accounts_details[c]||{};
+      answers.accounts_details[c].freq = el.dataset.freq; renderStep();
+    });
+  }
+  else if(step.kind==='lead'){
+    body.innerHTML = `
+      <div class="field"><label class="field-label">Prénom et nom</label><input type="text" id="f-name" value="${answers.lead_name||''}" placeholder="Ex. Marie Tremblay"></div>
+      <div class="field"><label class="field-label">Courriel</label><input type="email" id="f-email" value="${answers.lead_email||''}" placeholder="marie@courriel.com"></div>
+      <div class="field"><label class="field-label">Téléphone</label><input type="tel" id="f-phone" value="${answers.lead_phone||''}" placeholder="514 555-0123"></div>
+    `;
+    document.getElementById('f-name').oninput = e => answers.lead_name = e.target.value;
+    document.getElementById('f-email').oninput = e => answers.lead_email = e.target.value;
+    document.getElementById('f-phone').oninput = e => answers.lead_phone = e.target.value;
+  }
+
+  document.getElementById('btn-back').style.visibility = pointer===0 ? 'hidden' : 'visible';
+  const isLast = pointer === visibleSteps().length - 1;
+  document.getElementById('btn-next').textContent = isLast ? 'Voir mon résultat' : 'Suivant';
+}
+
+// ======================= VALIDATION =======================
+function validateStep(){
+  const step = currentStep();
+  const errEl = document.getElementById('step-err');
+  errEl.classList.remove('show');
+  let msg = '';
+
+  if(step.kind==='number'){
+    const v = document.getElementById('f-val').value;
+    if(!v || isNaN(v)) msg = 'Entre un nombre valide.';
+    else answers[step.id] = parseInt(v);
+  }
+  else if(step.kind==='single'){
+    if(answers[step.id]===undefined) msg = 'Choisis une option.';
+  }
+  else if(step.kind==='multi'){
+    if(!(answers[step.id]||[]).length) msg = 'Choisis au moins une option.';
+    const otherOpt = step.options.find(o=>o.other);
+    if(!msg && otherOpt && (answers[step.id]||[]).includes(otherOpt.value) && !(answers[step.id+'_other']||'').trim()) msg = 'Précise ton autre objectif.';
+  }
+  else if(step.kind==='yesno' || step.kind==='yesno-number' || step.kind==='yesno-multi' || step.kind==='yesno-children'){
+    if(!answers[step.id]) msg = 'Choisis Oui ou Non.';
+    if(!msg && step.kind==='yesno-number' && answers[step.id]==='oui' && !answers[step.id+'_valeur']) msg = 'Entre une valeur approximative.';
+    if(!msg && step.kind==='yesno-children' && answers[step.id]==='oui'){
+      const count = answers.enfants_nombre||0;
+      const ages = answers.enfants_ages||[];
+      for(let i=0;i<count;i++){ if(!ages[i]){ msg = "Indique l'âge de chaque enfant."; break; } }
+    }
+  }
+  else if(step.kind==='dynamic-horizons'){
+    const goals = answers.goals||[];
+    const h = answers.horizons||{};
+    for(const g of goals){ if(!h[g]){ msg = "Indique un horizon pour chaque objectif."; break; } }
+  }
+  else if(step.kind==='accounts-select'){
+    if(!(answers.accounts_selected||[]).length) msg = 'Sélectionne au moins un compte, ou reviens en arrière si aucun ne s\'applique.';
+  }
+  else if(step.kind==='accounts-details'){
+    const sel = answers.accounts_selected||[];
+    for(const code of sel){
+      const d = (answers.accounts_details||{})[code];
+      if(!d || !d.solde) { msg = `Entre le solde pour ${ACCOUNT_LABELS[code]}.`; break; }
+      if(ACCUMULATION_ACCOUNTS.includes(code) && d.cotisation && !d.freq){ msg = `Précise la fréquence de cotisation pour ${ACCOUNT_LABELS[code]}.`; break; }
+    }
+  }
+  else if(step.kind==='lead'){
+    const name = (answers.lead_name||'').trim();
+    const email = (answers.lead_email||'').trim();
+    const phone = (answers.lead_phone||'').trim();
+    if(!name) msg = 'Entre ton nom.';
+    else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) msg = 'Entre un courriel valide.';
+    else if(!phone) msg = 'Entre ton numéro de téléphone.';
+  }
+
+  if(msg){ errEl.textContent = msg; errEl.classList.add('show'); return false; }
+  return true;
+}
+
+// ======================= NAVIGATION =======================
+function goNext(){
+  if(!validateStep()) return;
+  const steps = visibleSteps();
+  if(pointer < steps.length - 1){
+    pointer++;
+    renderStep();
+    window.scrollTo({top:0, behavior:'smooth'});
+  } else {
+    showResults();
+  }
+}
+function goBack(){
+  if(pointer===0) return;
+  pointer--;
+  renderStep();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showResults(){
+  document.getElementById('screen-quiz').classList.remove('active');
+  document.getElementById('screen-results').classList.add('active');
+  const total = PDFEngine.scoreTotal(answers);
+  document.getElementById('res-score').textContent = total;
+  const tierInfo = PDFEngine.scoreTier(total);
+  const tierEl = document.getElementById('res-tier');
+  tierEl.textContent = tierInfo.tier; tierEl.style.color = `rgb(${tierInfo.color.join(',')})`;
+  const seg = PDFEngine.computeSegment(answers);
+  document.getElementById('res-segment').textContent = 'Segment: ' + PDFEngine.SEGMENT_LABELS[seg];
+
+  // Notifie Samuel avec un lien de révision — n'affecte jamais l'écran visiteur,
+  // même si l'appel échoue (pas de backend = pas de garantie de succès).
+  fetch('/api/notify', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(answers)
+  }).catch(e => console.error('Notification échouée:', e));
+}
+
+// ======================= INIT =======================
+renderStep();
+</script>
+</body>
+</html>
