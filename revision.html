@@ -9,10 +9,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#122A2E; --ink-soft:#3E5459; --paper:#EEF2F0; --card:#FFFFFF;
-    --line: rgba(18,42,46,0.14); --line-strong: rgba(18,42,46,0.28);
-    --gold:#B9862F; --gold-light:#F3E7D2; --teal:#1F6F5C; --teal-light:#E1EDE8;
-    --red:#B4432E; --red-light:#F5E3DE; --radius:10px;
+    /* Palette : navy + or/laiton + crème, bourgogne pour les alertes */
+    --ink:#1B2A4A; --ink-soft:#4A5B7A; --paper:#F6F1E7; --card:#FFFFFF;
+    --line: rgba(27,42,74,0.14); --line-strong: rgba(27,42,74,0.28);
+    --gold:#B8935A; --gold-light:#F0E6D2; --teal:#1B2A4A; --teal-light:#E4E9F0;
+    --red:#8B3A3A; --red-light:#F5E5E0; --radius:10px;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.5;}
@@ -28,13 +29,13 @@
   input[type=text],input[type=email],input[type=tel]{width:100%;padding:9px 11px;font-size:14px;font-family:'Inter',sans-serif;border:1px solid var(--line-strong);border-radius:7px;background:#fff;color:var(--ink);}
   textarea{width:100%;min-height:220px;font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:10px;border:1px solid var(--line-strong);border-radius:7px;background:#fff;color:var(--ink);}
   input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-light);}
-  button.btn{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:11px 18px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;width:100%;margin-top:6px;}
-  button.btn:hover{background:#0B1D20;}
-  button.btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--line-strong);}
-  button.btn.secondary:hover{background:rgba(18,42,46,0.05);}
-  button.btn.approve{background:var(--teal);border-color:var(--teal);}
-  button.btn.approve:hover{background:#175945;}
-  button.btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn{font-family:'Inter',sans-serif;font-weight:600;font-size:14px;padding:11px 18px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;width:100%;margin-top:6px;box-sizing:border-box;display:inline-block;}
+  .btn:hover{background:#0B1D20;}
+  .btn.secondary{background:transparent;color:var(--ink);border:1px solid var(--line-strong);}
+  .btn.secondary:hover{background:rgba(18,42,46,0.05);}
+  .btn.approve{background:var(--teal);border-color:var(--teal);}
+  .btn.approve:hover{background:#175945;}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
   details summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:10px;}
   .status{font-size:13px;margin-top:10px;padding:10px 12px;border-radius:8px;display:none;}
   .status.show{display:block;}
@@ -93,6 +94,11 @@
     </div>
 
     <div class="card" style="padding:10px;">
+      <div style="display:flex;gap:10px;padding:8px 8px 12px;">
+        <a class="btn" id="btn-open-tab" href="#" target="_blank" style="flex:1;text-align:center;text-decoration:none;">Ouvrir le PDF dans un nouvel onglet</a>
+        <a class="btn secondary" id="btn-download" href="#" style="flex:1;text-align:center;text-decoration:none;">Télécharger le PDF</a>
+      </div>
+      <p class="hint" style="padding:0 8px 10px;margin:0;">Si l'aperçu ci-dessous apparaît vide ou noir (bug d'affichage connu de certains navigateurs), utilise un des deux boutons ci-dessus — le PDF est correct.</p>
       <iframe class="preview-frame" id="preview" title="Aperçu PDF"></iframe>
     </div>
   </div>
@@ -101,20 +107,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="assets.js"></script>
 <script src="pdf-engine.js"></script>
 <script>
 // ======================= JEU DE RÉPONSES DE TEST =======================
 const SAMPLE_ANSWERS = {
   age: 38,
-  s1:2, s2:2, s3:2, s4:2, s5:2, s6:3, s7:2, s8:1, s9:2, s10:1,
+  s1:2, s3:2, s4:2, s5:2, s8:2, s10:1,
   goals:['retraite','propriete'], horizons:{retraite:'27', propriete:'3'},
-  revenu:2, epargne:2, survie:2, entreprise:'oui', immo_secondaire:'non',
-  residence:'oui', residence_valeur:'420000', hypotheque:'oui',
+  revenu:2, epargne:2, fonds_pension:0, entreprise:'oui', biz_employe_cle:'oui',
+  residence:'oui', residence_valeur:'420000', immo_secondaire:'non', hypotheque:'oui',
   enfants:'oui', enfants_nombre:2, enfants_ages:['6','9'],
   reei_admissible:'non', succession:'oui', succession_precision:['enfants','impot'],
-  vie_raisons:['dettes','niveau_vie','continuite'], invalidite_raisons:['revenu','cotisations'],
-  maladie_raisons:['proteger_plan','enfants'],
-  biz_employe_cle:'oui', biz_assurance_corpo:'non', biz_dividendes:'oui', biz_convention:'non', biz_releve:'non',
+  dependants_financiers:'oui', assurance_vie_actuelle:'non',
+  biz_assurance_corpo:'non', biz_dividendes:'oui', biz_convention:'non', biz_releve:'non',
   accounts_selected:['REER','CELI','NONENR'],
   accounts_details:{
     REER:{solde:'62000', cotisation:'400', freq:'mensuelle'},
@@ -188,6 +194,10 @@ async function regenerate(){
     const blob = doc.output('blob');
     currentPdfUrl = URL.createObjectURL(blob);
     document.getElementById('preview').src = currentPdfUrl;
+    document.getElementById('btn-open-tab').href = currentPdfUrl;
+    const dl = document.getElementById('btn-download');
+    dl.href = currentPdfUrl;
+    dl.download = `score-sante-financiere-${(answers.lead_name||'client').replace(/\s+/g,'-').toLowerCase()}.pdf`;
     document.getElementById('btn-send').disabled = !validEmail(answers.lead_email);
   } catch(e){
     console.error(e);
