@@ -70,6 +70,11 @@
   .level-toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-16px);opacity:0;pointer-events:none;background:var(--ink);color:#fff;padding:10px 18px;border-radius:30px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(27,42,74,0.28);display:flex;align-items:center;gap:8px;z-index:50;transition:opacity .25s,transform .25s;}
   .level-toast.show{opacity:1;transform:translate(-50%,0);}
 
+  /* Petit indicateur "sauvegarde auto" façon jeu vidéo — rassure que rien ne sera perdu
+     si la personne quitte, sans jamais bloquer l'interaction. */
+  .save-indicator{position:fixed;bottom:16px;left:50%;transform:translate(-50%,10px);opacity:0;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:7px 14px;border-radius:20px;box-shadow:0 6px 18px rgba(27,42,74,0.25);transition:opacity .25s,transform .25s;z-index:50;}
+  .save-indicator.show{opacity:1;transform:translate(-50%,0);}
+
   /* Transition douce entre chaque question plutôt qu'un changement sec. */
   @keyframes cardIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
   .q-card-anim{animation:cardIn .35s ease;}
@@ -123,6 +128,18 @@
     <p class="sub">Réponds aux questions suivantes pour obtenir un portrait clair de ta situation et des recommandations concrètes.</p>
   </header>
 
+  <div class="screen" id="screen-resume">
+    <div class="card" style="text-align:center;">
+      <p style="font-size:34px;margin:0 0 10px;">💾</p>
+      <p class="q-title" style="margin-bottom:8px;">Reprendre où tu étais?</p>
+      <p class="q-note" id="resume-detail" style="margin-bottom:20px;"></p>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn secondary" onclick="restartProgress()">Recommencer à zéro</button>
+        <button class="btn" onclick="resumeProgress()">Reprendre</button>
+      </div>
+    </div>
+  </div>
+
   <div class="screen active" id="screen-quiz">
     <div class="progress-wrap">
       <div class="quest-path" id="quest-path"></div>
@@ -139,6 +156,7 @@
   </div>
 
   <div class="level-toast" id="level-toast"></div>
+  <div class="save-indicator" id="save-indicator">💾 Progression sauvegardée</div>
 
   <div class="screen" id="screen-results">
     <div class="card">
@@ -248,6 +266,46 @@ let answers = {};
 let pointer = 0;
 let lastSectionIdx = null; // pour détecter un changement de section et déclencher le toast "niveau suivant"
 
+// ======================= SAUVEGARDE AUTO / REPRISE =======================
+// Enregistre la progression dans le navigateur (localStorage) à chaque réponse, pour
+// que quelqu'un qui quitte en cours de route puisse reprendre exactement où il était
+// en revenant sur cette page — aucune question ni logique de scoring n'est touchée,
+// seule une couche de persistance est ajoutée par-dessus.
+const STORAGE_KEY = 'sfq_progress_v1';
+const STORAGE_MAX_AGE = 30*24*60*60*1000; // 30 jours — au-delà, une reprise n'a plus grand sens
+let persistTimer = null;
+
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, pointer, savedAt: Date.now() }));
+    showSaveIndicator();
+  }catch(e){ /* stockage indisponible (navigation privée, quota) — tant pis, pas bloquant */ }
+}
+function persistDebounced(){
+  clearTimeout(persistTimer);
+  persistTimer = setTimeout(persist, 500);
+}
+function clearProgress(){
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+}
+function loadSavedProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    const data = JSON.parse(raw);
+    if(!data || typeof data.answers !== 'object') return null;
+    if(Date.now() - (data.savedAt||0) > STORAGE_MAX_AGE) return null;
+    return data;
+  }catch(e){ return null; }
+}
+function showSaveIndicator(){
+  const el = document.getElementById('save-indicator');
+  if(!el) return;
+  el.classList.add('show');
+  clearTimeout(showSaveIndicator._t);
+  showSaveIndicator._t = setTimeout(()=>el.classList.remove('show'), 1200);
+}
+
 // Icône par section — purement décoratif (jalons du chemin de progression + toast).
 const SECTION_ICONS = {
   intro:'🚀', score:'🧭', goals:'🎯', situation:'💼', family:'👨‍👩‍👧',
@@ -320,6 +378,7 @@ function renderStep(){
 
   if(step.kind==='number'){
     body.innerHTML = `<input type="number" id="f-val" placeholder="${step.placeholder||''}" value="${answers[step.id]??''}">`;
+    document.getElementById('f-val').oninput = e => { answers[step.id] = e.target.value===''? undefined : parseInt(e.target.value); };
   }
   else if(step.kind==='single'){
     body.innerHTML = `<div class="options">${step.options.map((o,i)=>`
@@ -505,6 +564,8 @@ function renderStep(){
   document.getElementById('btn-back').style.visibility = pointer===0 ? 'hidden' : 'visible';
   const isLast = pointer === visibleSteps().length - 1;
   document.getElementById('btn-next').textContent = isLast ? 'Voir mon résultat' : 'Suivant';
+
+  persist();
 }
 
 // ======================= VALIDATION =======================
@@ -621,6 +682,7 @@ function spawnSparks(wrap){
 }
 
 function showResults(){
+  clearProgress(); // terminé — plus besoin de proposer une reprise
   document.getElementById('screen-quiz').classList.remove('active');
   document.getElementById('screen-results').classList.add('active');
   const total = PDFEngine.scoreTotal(answers);
@@ -647,7 +709,43 @@ function showResults(){
 }
 
 // ======================= INIT =======================
-renderStep();
+// Champs texte/nombre (horizons, âges d'enfants, soldes de comptes, coordonnées...) qui
+// modifient `answers` directement sans repasser par renderStep() — un seul écouteur
+// délégué sur le conteneur (jamais remplacé, seul son contenu l'est) suffit à tous les
+// couvrir, plutôt que d'ajouter un appel à persist() dans chaque gestionnaire.
+document.getElementById('q-card').addEventListener('input', persistDebounced);
+
+function startQuiz(){
+  document.getElementById('screen-resume').classList.remove('active');
+  document.getElementById('screen-quiz').classList.add('active');
+  renderStep();
+}
+function resumeProgress(){
+  answers = savedProgress.answers || {};
+  pointer = savedProgress.pointer || 0;
+  // Si les réponses chargées changent les conditions d'affichage, pointer pourrait
+  // dépasser le nombre d'étapes désormais visibles — on le ramène dans les bornes.
+  const steps = visibleSteps();
+  if(pointer >= steps.length) pointer = Math.max(0, steps.length-1);
+  startQuiz();
+}
+function restartProgress(){
+  clearProgress();
+  answers = {};
+  pointer = 0;
+  startQuiz();
+}
+
+const savedProgress = loadSavedProgress();
+if(savedProgress && (Object.keys(savedProgress.answers||{}).length>0 || savedProgress.pointer>0)){
+  const d = new Date(savedProgress.savedAt||Date.now());
+  document.getElementById('resume-detail').textContent =
+    `Tu avais commencé une évaluation le ${d.toLocaleDateString('fr-CA')} à ${d.toLocaleTimeString('fr-CA',{hour:'2-digit',minute:'2-digit'})}.`;
+  document.getElementById('screen-quiz').classList.remove('active');
+  document.getElementById('screen-resume').classList.add('active');
+} else {
+  renderStep();
+}
 </script>
 </body>
 </html>
